@@ -6,7 +6,7 @@
     <ProjectGuid>{64FA4132-AC70-4006-9495-F974EE2DD808}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>def</RootNamespace>
-    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <PublishUrl>publish\</PublishUrl>
@@ -24,6 +24,7 @@
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
     <NoWin32Manifest>true</NoWin32Manifest>
     <GenerateNeutralResourcesLanguageAttribute>false</GenerateNeutralResourcesLanguageAttribute>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Default|AnyCPU' ">
     <PlatformTarget>x64</PlatformTarget>
@@ -59,6 +60,9 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

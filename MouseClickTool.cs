@@ -50,13 +50,18 @@ public class MouseClickTool : Form
         public MouseInput mi;
     }
 
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-mouseinput
+    /// </summary>
     [Flags]
     private enum MouseEventFlag : uint
     {
+        MOUSEEVENTF_MOVE = 0x0001,
         MOUSEEVENTF_LEFTDOWN = 0x0002,
         MOUSEEVENTF_LEFTUP = 0x0004,
         MOUSEEVENTF_RIGHTDOWN = 0x0008,
         MOUSEEVENTF_RIGHTUP = 0x0010,
+        MOUSEEVENTF_ABSOLUTE = 0x8000,
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -105,6 +110,17 @@ public class MouseClickTool : Form
         return Math.Abs(height1 - height2) / 2;
     }
 
+    private (int, int) GetRandomPixelPosition()
+    {
+        var random = new Random();
+        var inputXinPixels = random.Next(1, 1025);
+        var inputYinPixels = random.Next(1, 900);
+        var screenBounds = Screen.PrimaryScreen.Bounds;
+        var outputX = inputXinPixels * 65535 / screenBounds.Width;
+        var outputY = inputYinPixels * 65535 / screenBounds.Height;
+        return (outputX, outputY);
+    }
+
     public MouseClickTool()
     {
         //CreateWindow and Controls
@@ -127,7 +143,7 @@ public class MouseClickTool : Form
                 c.Font = new Font("Segoe UI", c.Font.Size);
             }
         }
-        ct.Items.AddRange([cn ? "左键(Left)" : "Left", cn ? "右键(Right)" : "Right"]);
+        ct.Items.AddRange([cn ? "左键(Left)" : "Left", cn ? "右键(Right)" : "Right", cn ? "移动(Move)" : "Move"]);
         for (int i = 1; i < 13; i++)
         {
             hk.Items.Add("F" + i);
@@ -172,6 +188,7 @@ public class MouseClickTool : Form
                         }
                         var downFlag = MouseEventFlag.MOUSEEVENTF_LEFTDOWN;
                         var upFlag = MouseEventFlag.MOUSEEVENTF_LEFTUP;
+                        var moveFlag = MouseEventFlag.MOUSEEVENTF_MOVE | MouseEventFlag.MOUSEEVENTF_ABSOLUTE;
                         Invoke(() =>
                         {
                             UpdateText();
@@ -180,6 +197,11 @@ public class MouseClickTool : Form
                                 downFlag = MouseEventFlag.MOUSEEVENTF_RIGHTDOWN;
                                 upFlag = MouseEventFlag.MOUSEEVENTF_RIGHTUP;
                             }
+                            else if (ct.SelectedIndex == 2)
+                            {
+                                downFlag = MouseEventFlag.MOUSEEVENTF_MOVE;
+                                upFlag = MouseEventFlag.MOUSEEVENTF_MOVE;
+                            }
                         });
                         source = new TaskCompletionSource<int>();
                         var size = Marshal.SizeOf(input);
@@ -187,10 +209,21 @@ public class MouseClickTool : Form
                         {
                             await Task.Run(async () =>
                             {
-                                input.mkhi.mi.dwFlags = downFlag;
-                                SendInput(1, ref input, size);
-                                input.mkhi.mi.dwFlags = upFlag;
-                                SendInput(1, ref input, size);
+                                if (downFlag == upFlag)
+                                {
+                                    var (x, y) = GetRandomPixelPosition();
+                                    input.mkhi.mi.dx = x;
+                                    input.mkhi.mi.dy = y;
+                                    input.mkhi.mi.dwFlags = moveFlag;
+                                    SendInput(1, ref input, size);
+                                }
+                                else
+                                {
+                                    input.mkhi.mi.dwFlags = downFlag;
+                                    SendInput(1, ref input, size);
+                                    input.mkhi.mi.dwFlags = upFlag;
+                                    SendInput(1, ref input, size);
+                                }
                                 if (delay != 0)
                                 {
                                     await Task.WhenAny(Task.Delay(delay), source.Task);
